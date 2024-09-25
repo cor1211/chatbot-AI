@@ -1,0 +1,649 @@
+{% extends 'base.html' %} {% block title %} Home page {% endblock %} {% block
+style %}
+<style>
+  #chat2 .form-control {
+    border-color: transparent;
+  }
+
+  #chat2 .form-control:focus {
+    border-color: transparent;
+    box-shadow: inset 0px 0px 0px 1px transparent;
+  }
+
+  .divider:after,
+  .divider:before {
+    content: "";
+    flex: 1;
+    height: 1px;
+    background: #eee;
+  }
+  /* Ensure the chat window takes up full width */
+
+  /* Add overflow to enable scrolling */
+  #chat-scroll {
+    overflow-y: auto;
+    flex-grow: 1;
+    scroll-behavior: smooth;
+  }
+  .container-fluid {
+    max-width: 100%;
+    padding-left: 0;
+    padding-right: 0;
+    flex-grow: 1;
+    position: relative;
+  }
+  html,
+  body {
+    height: 100%;
+    margin: 0;
+    padding: 0;
+    display: flex;
+    flex-direction: column;
+  }
+  section {
+    background-color: #ddd;
+  }
+  .card-footer {
+    position: sticky;
+    bottom: -41.5px;
+    border: none;
+  }
+  .card-body {
+    background-color: #f9e4a5;
+  }
+  .card-body-chat-session {
+    padding: 0;
+    overflow-y: auto;
+    max-height: 85.3vh;
+  }
+  .card-body-chat-session ul li {
+    margin: 7px 0px;
+  }
+
+  .card-body-chat-session ul li a {
+    padding: 7px 10px;
+    text-decoration: none;
+    display: block;
+    color: black;
+    /* background-color: ; */
+    border-radius: 0.5rem;
+    display: flex;
+    justify-content: space-between;
+  }
+  .li-chat-session {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    flex-wrap: wrap;
+  }
+  /* .li-chat-session >a{
+    
+  } */
+  .card-body-chat-session ul li a:hover {
+    background-color: white;
+  }
+  .card-body-chat-session ul li a:focus {
+    background-color: white;
+  }
+  .card-header {
+    /* box-shadow: rgba(0, 0, 0, 0.16) 0px 3px 6px, rgba(0, 0, 0, 0.23) 0px 3px 6px; */
+    margin-bottom: -0.5px;
+  }
+  .menu-drop-down-ul-session {
+    margin: 0;
+    padding: 0;
+    list-style-type: none;
+    position: absolute;
+    left: 205px;
+    top: 22px;
+    z-index: 1;
+    background-color: #ddd;
+    display: none;
+    flex-direction: column;
+    border-radius: 0.75rem;
+  }
+  .menu-drop-down-ul-session > li:hover {
+    background: white;
+    border-radius: 0.75rem;
+    cursor: pointer;
+  }
+  .menu-drop-down-ul-session > li {
+    padding: 5px 9px;
+    text-align: center;
+  }
+  .scroll-down {
+    position: sticky;
+    bottom: 50px;
+    /* display: block; */
+    margin-left: auto;
+    margin-right: auto;
+    display: none;
+    border: none;
+    border-radius: 12px;
+  }
+  body {
+    max-width: 100vp;
+    max-height: 100vp;
+  }
+  .chat-session-sidebar-close {
+    display: none !important;
+  }
+</style>
+{% endblock %} {% block content %}
+
+<!-- <ul>
+{% for message in user.messages %}
+<li>You: {{message.request}}</li>
+<li>Bot: {{message.response}}</li>
+
+{% endfor %}
+</ul> -->
+
+<!-- <br>
+<form method="POST" id="chatform">
+   <textarea name="request" id="request" class="form-control">
+   </textarea>
+   <br>
+   <div align="center">
+      <button type="submit" class="btn btn-primary">Send request</button>
+   </div>
+   <br>
+   
+</form> -->
+
+<!-- <div align="center">
+  <button  class="btn btn-primary" onclick="saveHistoryLocal()">Update history</button>
+</div> -->
+
+<section>
+  <div
+    class="container-fluid d-flex flex-column"
+    style="width: 100%; flex-grow: 1"
+  >
+    <!--Main Content-->
+    <div class="row d-flex justify-content-center flex-grow-1">
+      <!--Chat session-->
+      <div
+        class="chat-session col-2 d-flex flex-column flex-grow-1"
+        id="additional-column"
+      >
+        <div class="card d-flex flex-column flex-grow-1">
+          <div class="card-body-chat-session card-body" id="extra-content">
+            <!-- Nội dung bạn muốn thêm -->
+            <!-- <p>This is the additional column.</p> -->
+            <ul
+              style="list-style-type: none; padding: 0; margin: 0"
+              class="ul-chat-session"
+            >
+              <li>
+                <button onclick="sideBarSessionClose(this)">
+                  <i class="fa-solid fa-bars"></i>
+                </button>
+              </li>
+              <li>
+                <form
+                  method="post"
+                  action="{{url_for('views.delete_message',session_id=sessionChat.id)}}"
+                >
+                  <button type="submit" class="btn btn-primary" align="center">
+                    Delete All Message
+                  </button>
+                </form>
+              </li>
+              <li>
+                <button
+                  class="btn-add-chat-session"
+                  onclick="newChatSession()"
+                  style="
+                    border: none;
+                    padding: 7px 10px;
+                    background: white;
+                    width: 100%;
+                    border-radius: 0.75rem;
+                  "
+                >
+                  <i class="fa-solid fa-plus"></i>
+                </button>
+              </li>
+              {% for chatSession in user.chatSessions | reverse %}
+              <li class="li-chat-session">
+                <a
+                  data-url="{{url_for('views.rename_session',session_id = chatSession.id)}}"
+                  style="display: inline"
+                  class="session-{{chatSession.id}} "
+                  onclick="session2sessionStorage({{chatSession.id}})"
+                  href="{{url_for('views.homepage',session_id = chatSession.id)}}"
+                >
+                  <span class="chat-session-name">{{chatSession.name}}</span>
+                  <span class="chat-session-date"
+                    >{{chatSession.dateTime.strftime("| %d/%m/%Y |
+                    %H:%M")}}</span
+                  >
+                </a>
+                <ul
+                  class="menu-drop-down-ul-session ul-menu-{{chatSession.id}}"
+                >
+                  <li onclick="rename_session({{chatSession.id}})">Rename</li>
+                  <li onclick="delete_session({{chatSession.id}})">Delete</li>
+                </ul>
+                <button
+                  style="border: none"
+                  class="menu-drop-down-button-session"
+                  type="button"
+                  onclick="showMenuDropDown({{chatSession.id}}, this)"
+                >
+                  <i class="fa-solid fa-ellipsis-vertical"></i>
+                </button>
+              </li>
+              {% endfor %}
+              <!-- <li class="li-chat-session">
+                <a href="#">
+                  <span class="chat-session-name">Name</span>
+                  <span class="chat-session-date">date-time</span>
+                </a>
+              </li>
+              <li class="li-chat-session">
+                <a href="#">
+                  <span class="chat-session-name">Name</span>
+                  <span class="chat-session-date">date-time</span>
+                </a>
+              </li> -->
+            </ul>
+          </div>
+        </div>
+      </div>
+
+      <!--Chat box-->
+      <div class="chat-box col-10 d-flex flex-column flex-grow-1">
+        <div class="card d-flex flex-column flex-grow-1" id="chat2">
+          <div
+            class="card-header d-flex justify-content-between align-items-center p-3"
+          >
+            <button
+              class="chat-session-sidebar-show"
+              style="display: none"
+              onclick="sideBarSessionShow()"
+            >
+              <i class="fa-solid fa-bars"></i>
+            </button>
+
+            <h5 class="mb-0">Chat</h5>
+            <button
+              type="button"
+              data-mdb-button-init
+              data-mdb-ripple-init
+              class="btn btn-primary btn-sm"
+              data-mdb-ripple-color="dark"
+            >
+              Let's Chat App
+            </button>
+          </div>
+          <div
+            class="card-body flex-grow-1"
+            id="chat-scroll"
+            data-mdb-perfect-scrollbar-init
+            style="position: relative; height: 581px"
+          >
+            {% for message in sessionChat.messages %}
+            <div class="d-flex flex-row justify-content-start">
+              <img
+                src="https://mdbcdn.b-cdn.net/img/Photos/new-templates/bootstrap-chat/ava3-bg.webp"
+                alt="avatar 1"
+                style="width: 45px; height: 100%"
+              />
+              <div>
+                <p class="small p-2 ms-3 mb-1 rounded-3 bg-body-tertiary">
+                  {{message.request| nl2br | bold_text | safe}}
+                </p>
+              </div>
+            </div>
+            <div class="d-flex flex-row justify-content-end mb-4 pt-1">
+              <div>
+                <p class="small p-2 me-3 mb-1 text-white rounded-3 bg-primary">
+                  {{message.response| nl2br | bold_text | safe }}
+                </p>
+              </div>
+              <img
+                src="https://mdbcdn.b-cdn.net/img/Photos/new-templates/bootstrap-chat/ava4-bg.webp"
+                alt="avatar 1"
+                style="width: 45px; height: 47.73px"
+              />
+            </div>
+            {% endfor %}
+            <button class="scroll-down">
+              <i class="fa-solid fa-arrow-down"></i>
+            </button>
+            <div
+              class="card-footer text-muted d-flex justify-content-start align-items-center p-3"
+            >
+              <img
+                src="https://mdbcdn.b-cdn.net/img/Photos/new-templates/bootstrap-chat/ava3-bg.webp"
+                alt="avatar 3"
+                style="width: 40px; height: 100%"
+              />
+
+              <form
+                method="post"
+                style="
+                  width: 100%;
+                  background-color: rgb(184, 184, 214);
+                  border-radius: 1.5rem;
+                "
+                class="d-flex justify-content-start align-items-center form-send-request"
+              >
+                <!-- <div class="represent-textarea" contenteditable="true" style=" min-height: 50px; padding: 10px; border-radius: 1.5rem; max-width: 75%;"></div> -->
+                <textarea
+                  style="
+                    background-color: rgb(184, 184, 214);
+                    border-radius: 1.5rem;
+                    line-height: 1.2em;
+                    resize: none;
+                    max-height: calc(10 * 1.2em);
+                  "
+                  name="request"
+                  type="text"
+                  class="form-control form-control-lg textarea-send-request"
+                  id="exampleFormControlInput1"
+                  rows="3"
+                  onkeydown="enter2Submit(event)"
+                >
+                </textarea>
+
+                <a class="ms-1 text-muted" href="#!"
+                  ><i class="fas fa-paperclip"></i
+                ></a>
+                <a class="ms-3 text-muted" href="#!"
+                  ><i class="fas fa-smile"></i
+                ></a>
+                <button
+                  class="ms-3 text-muted"
+                  type="submit"
+                  style="border: none; background: none; padding: none"
+                >
+                  <i class="fas fa-paper-plane"></i>
+                </button>
+              </form>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+{% endblock %} {% block script %}
+
+<script>
+  //  Scroll to the bottom of the chat when the page loads
+  document.addEventListener("DOMContentLoaded", function () {
+    let chatScroll = document.getElementById("chat-scroll");
+    chatScroll.scrollTop = chatScroll.scrollHeight;
+    // Khi trang đc load xong, luôn focus vào ô textarea-send-request
+    const textare = document.querySelector(".textarea-send-request");
+    textare.focus();
+    textare.setSelectionRange(0, 0);
+
+    // Xử lý focus sesssion
+    session_id = sessionStorage.getItem("session_id") || null;
+    if (session_id) {
+      const session = document.querySelector(`.session-${session_id}`);
+      session.style.backgroundColor = "white";
+    }
+  });
+
+  // Click btn + để thêm session
+  function newChatSession() {
+    // Tham chiếu thẻ cha
+    let ul_session = document.querySelector(".ul-chat-session");
+
+    //Sai vì para1 trong insertBefore phải là 1 ele, trong khi cái m tạo ra là 1 string
+    // let new_li = '<li><a href="#">chat-session</a></li>';
+    // ul_session.append(new_li);
+    // // ul_session.innerHTML+=  new_li;
+
+    // Tạo 1 ele
+    const newLi = document.createElement("li");
+    // Thêm nội dung cho ele
+    newLi.innerHTML = `
+      <form class='form-create-session' method='post', action="{{url_for('views.add_sessionChat')}}">
+        <input class='en-name-session' type='text' placeholder="Type session name" style={padding: 7px 10px;} name='name_sessionChat' onblur="create_session_blur()" autofocus>
+      </form>
+      `;
+    // Thêm thẻ ele vừa tạo vào đầu của các thằng con trong thẻ cha
+    ul_session.insertBefore(newLi, ul_session.firstChild);
+  }
+
+  // Hàm xử lý xóa session
+  function delete_session(chatSession_id) {
+    //Gửi http post với api delete_session
+    fetch("/views/delete-session", {
+      // Phương thức http
+      method: "POST",
+      // Gửi kèm dữ liệu: id session cần xóa
+      body: JSON.stringify({ chatSession_id: chatSession_id }),
+      // Kiểu dữ liệu đc gửi
+      headers: {
+        "Content-Type": "application/json",
+      },
+    })
+      // Xử lý khi nhận đc kq trả về từ BE
+      .then((_res) => {
+        // Reload lại trang homepage
+        window.location.href = "/views/home";
+      });
+  }
+
+  // Hàm xử lý submit form tạo session khi nhập input và click chuột ra ngoài
+  function create_session_blur() {
+    // Tham chiếu tới form
+    const form = document.querySelector(".form-create-session");
+    // Tham chiếu tới ô input
+    const inp = document.querySelector(".en-name-session");
+    // Gửi form
+    form.submit();
+  }
+  // Lắng nghe khi form session đc thêm mới thì autofocus vào input
+  document.addEventListener("DOMContentLoaded", function () {
+    // Đối tượng theo dõi
+    const observer = new MutationObserver((observer) => {
+      // Tạo đối tượng cần theo dõi: input
+      const inp = document.querySelector(".en-name-session");
+      // Check trạng thái
+      if (inp) {
+        // Focus ô input
+        inp.focus();
+      }
+    });
+    // Kích hoạt theo dõi
+    observer.observe(document.body, {
+      childList: true,
+      subtree: true,
+    });
+  });
+
+  function session2sessionStorage(session_id) {
+    // Xóa session_id trên sessionStorage nếu có
+    if (sessionStorage.getItem("session_id")) {
+      sessionStorage.removeItem("session_id");
+    }
+    // Thêm session_id hiện tại đc click vào sessionStorage
+    sessionStorage.setItem("session_id", session_id);
+  }
+
+  // function xyz(){
+  //   session_id = sessionStorage.getItem('session_id') || null;
+  //   if (session_id){
+  //     const session = document.querySelector('.session-')
+  //   }
+  // }
+
+  // Hàm enter để submit form send request và shift-enter để xuống dòng
+  function enter2Submit(event) {
+    // Tham chiếu tới form
+    const form = document.querySelector(".form-send-request");
+    // Tham chiếu tới textarea
+    const textarea = document.querySelector(".textarea-send-request");
+    if (event.key == "Enter") {
+      // Nếu đang giữ phím shift -> return True
+      if (event.shiftKey) {
+        return;
+      } else {
+        // Ngăn không cho xuống dòng
+        event.preventDefault();
+        // Submit form
+        form.submit();
+      }
+    }
+  }
+
+  // Xử lý paste image vào ô textarea-send-request
+  // function pasteImage2TextArea(event) {
+  //   // Ngăn hành vi mặc định
+  //   event.preventDefault();
+  //   // Lấy các đối tượng trong clipboard (img, text, ...)
+  //   const items = (event.clipboardData || event.originalEvent.clipboardData)
+  //     .items;
+  //   // Duyệt từng đối tượng
+  //   for (let item of items) {
+  //     // Nếu là img
+  //     if (item.type.indexOf("image") !== -1) {
+  //       // Chuyển đối tg img thành file
+  //       const file = item.getAsFile();
+  //       // Tạo đối tượng đọc file
+  //       const reader = new FileReader();
+  //       // Xử lý khi đối tượng đọc file xong (vì async)
+  //       reader.onload = function (event) {
+  //         // Hiển thị ảnh trong thẻ img
+  //         const preview = document.getElementById("preview");
+  //         const imageContainer = document.getElementById("imageContainer");
+  //         // Gán dữ liệu của file sau khi đọc cho thẻ img
+  //         preview.src = event.target.result;
+  //         preview.style.display = "block";
+  //         imageContainer.style.display = "flex";
+  //         // Đọc file img
+  //         reader.readAsDataURL(file);
+  //       };
+  //     }
+  //   }
+  // }
+
+  // Xử lý auto resize textarea-send-request
+  function resizeTextarea() {
+    const textarea = document.querySelector(".textarea-send-request");
+    textarea.style.height = "auto";
+    textarea.style.height = `${Math.min(
+      textarea.scrollHeight,
+      10 * parseFloat(getComputedStyle(textarea).lineHeight)
+    )}px`;
+  }
+
+  // Thay đổi kích thước khi người dùng gõ
+  document
+    .querySelector(".textarea-send-request")
+    .addEventListener("input", resizeTextarea);
+
+  // Xử lý menu dropdown ở chat session
+  function showMenuDropDown(session_id, btn) {
+    // Check xem đã clicked chưa
+    // Nếu đã click
+    if (window.getComputedStyle(btn).backgroundColor === "rgb(221, 221, 221)") {
+      btn.style.backgroundColor = "white";
+      const ul = document.querySelector(`.ul-menu-${session_id}`);
+      if (ul) {
+        ul.style.display = "none";
+      }
+    }
+    // Chưa bị click
+    else {
+      // Fix màu all btn về mặc định (white)
+      document
+        .querySelectorAll(".menu-drop-down-button-session")
+        .forEach((button) => {
+          button.style.backgroundColor = "white";
+        });
+      // Đổi màu btn
+      btn.style.backgroundColor = "#ddd";
+      // Ẩn tất cả ul-menu
+      document.querySelectorAll(".menu-drop-down-ul-session").forEach((ul) => {
+        ul.style.display = "none";
+      });
+      // Hiện menu tương ứng với btn clicked
+      const ul = document.querySelector(`.ul-menu-${session_id}`);
+      if (ul) {
+        // Chuyển thẻ ul-menu ra ngoài body
+        document.body.appendChild(ul);
+        // Lấy vị trí, kích thước của btn
+        const rect = btn.getBoundingClientRect();
+        console.log("rect", rect);
+        // Set top, left cho ul-menu (vị trí tương đối so với body)
+        ul.style.left = `${rect.left + 18}px`;
+        ul.style.top = `${rect.top + 23}px`;
+        ul.style.display = "flex";
+      }
+    }
+  }
+
+  // Xử lý đổi tên session
+  function rename_session(session_id) {
+    // Tham chiếu thẻ a của session
+    const a_ele = document.querySelector(`.session-${session_id}`);
+    // Tạo mới 1 form_ele
+    let form_ele = document.createElement("form");
+    // Set method
+    form_ele.method = "post";
+    // Set url action bằng cách gán nhờ url ở thẻ a
+    form_ele.action = a_ele.getAttribute("data-url");
+    // Tạo input_ele
+    let input_ele = document.createElement("input");
+    input_ele.name = "newName_session";
+    // Add input_ele vào form
+    form_ele.appendChild(input_ele);
+    // Replace thẻ a session ban đầu thành form
+    a_ele.parentNode.replaceChild(form_ele, a_ele);
+  }
+
+  // Kiểm tra scroll, nếu đang cuộn lên thì xhien button Down để kéo xuống cuối
+  document.getElementById("chat-scroll").addEventListener("scroll", (event) => {
+    const scroll = event.target;
+    const btn_down = document.querySelector(".scroll-down");
+    if (scroll.scrollTop <= scroll.scrollHeight - 650) {
+      btn_down.style.display = "block";
+      btn_down.addEventListener("click", () => {
+        scroll.scrollTop = scroll.scrollHeight;
+      });
+    } else {
+      btn_down.style.display = "none";
+    }
+    console.log(scroll.scrollTop, scroll.scrollHeight);
+  });
+
+  // Xử lý hidden, show sidebar session
+  function sideBarSessionClose(btn) {
+    const session = document.querySelector(".chat-session");
+    if (session) {
+      console.log(session);
+      console.log(window.getComputedStyle(session).display);
+      // if (window.getComputedStyle(session).display !== "none !important") {
+      //   session.style.display = "none !important";
+      // }
+      session.classList.add("chat-session-sidebar-close");
+    }
+    const buttonShow = document.querySelector(".chat-session-sidebar-show");
+    buttonShow.style.display = "block";
+  }
+
+  function sideBarSessionShow() {
+    const session = document.querySelector(".chat-session");
+    if (session) {
+      console.log(session);
+      console.log(window.getComputedStyle(session).display);
+      // if (window.getComputedStyle(session).display !== "none !important") {
+      //   session.style.display = "none !important";
+      // }
+      session.classList.remove("chat-session-sidebar-close");
+    }
+    const buttonShow = document.querySelector(".chat-session-sidebar-show");
+    buttonShow.style.display = "none";
+  }
+</script>
+{% endblock %}
